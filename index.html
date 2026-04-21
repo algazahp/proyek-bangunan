@@ -11,7 +11,8 @@
         .container { padding: 16px; }
         .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
         .card-info { background: #eff6ff; border-left: 4px solid var(--primary); }
-        .card-title { font-weight: bold; margin-bottom: 8px; font-size: 0.95rem; padding-right: 60px; } 
+        /* padding-right ditambahin biar text ga nabrak 2 tombol (Edit & Hapus) */
+        .card-title { font-weight: bold; margin-bottom: 8px; font-size: 0.95rem; padding-right: 140px; } 
         .text-sm { font-size: 0.85rem; color: #4b5563; margin-bottom: 4px; }
         .text-red { color: #dc2626; font-weight: bold; }
         .text-green { color: #16a34a; font-weight: bold; }
@@ -19,21 +20,30 @@
         /* Form & Inputs */
         label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: bold; }
         input, select { width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
         
-        /* Tombol Hapus Satuan */
+        /* Tombol Riwayat (Hapus & Edit) */
         .btn-delete-item { position: absolute; top: 12px; right: 12px; background: #fee2e2; color: #dc2626; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer; width: auto; }
+        .btn-edit-item { position: absolute; top: 12px; right: 80px; background: #e0f2fe; color: #0284c7; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer; width: auto; }
         
+        /* Progress Bar */
+        .progress-bg { background-color: #e5e7eb; border-radius: 9999px; height: 8px; width: 100%; margin: 8px 0; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.3s ease; }
+        .bg-green { background-color: #10b981; }
+        .bg-orange { background-color: #f59e0b; }
+        .bg-red { background-color: #ef4444; }
+
         /* Filter & Sort Controls */
         .controls-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .controls-select { width: auto; padding: 6px; margin: 0; font-size: 0.85rem; border-radius: 6px; border: 1px solid #d1d5db; }
         .filter-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
         .filter-box select { margin-bottom: 8px; font-size: 0.85rem; padding: 8px; }
         .row-flex { display: flex; gap: 8px; }
-        .btn-reset { background: #64748b; margin-bottom: 0; padding: 8px; font-size: 0.85rem; }
+        .btn-reset { background: #64748b; margin-bottom: 0; padding: 8px; font-size: 0.85rem; flex: 1; }
+        .btn-export { background: #10b981; margin-bottom: 0; padding: 8px; font-size: 0.85rem; flex: 1; }
         
         /* Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 20; }
         .nav-item { text-align: center; font-size: 0.85rem; color: #6b7280; font-weight: bold; cursor: pointer; flex: 1; }
         .nav-item.active { color: var(--primary); }
         
@@ -55,7 +65,7 @@
     </div>
 
     <div class="container view" id="view-input">
-        <h2 style="font-size: 1.1rem; margin-top:0;">Catat Pengeluaran</h2>
+        <h2 style="font-size: 1.1rem; margin-top:0;" id="form-title">Catat Pengeluaran</h2>
         <div class="card">
             <form id="form-pengeluaran">
                 <label>Tanggal</label>
@@ -70,7 +80,7 @@
                 <label>Nominal (Rp)</label>
                 <input type="text" id="input-nominal" placeholder="Contoh: Rp 1.500.000" required autocomplete="off">
                 
-                <button type="submit">Simpan Pengeluaran</button>
+                <button type="submit" id="btn-submit-form">Simpan Pengeluaran</button>
             </form>
         </div>
     </div>
@@ -87,12 +97,12 @@
         </div>
 
         <div class="filter-box">
-            <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px;">Filter Data:</div>
+            <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px;">Filter & Laporan:</div>
             <select id="filter-kategori" onchange="renderRiwayat()">
                 <option value="">Semua Kategori</option>
-                </select>
-            <div class="row-flex">
-                <select id="filter-bulan" onchange="renderRiwayat()">
+            </select>
+            <div class="row-flex" style="margin-bottom: 8px;">
+                <select id="filter-bulan" onchange="renderRiwayat()" style="margin-bottom: 0;">
                     <option value="">Semua Bulan</option>
                     <option value="1">Januari</option>
                     <option value="2">Februari</option>
@@ -107,11 +117,14 @@
                     <option value="11">November</option>
                     <option value="12">Desember</option>
                 </select>
-                <select id="filter-tahun" onchange="renderRiwayat()">
+                <select id="filter-tahun" onchange="renderRiwayat()" style="margin-bottom: 0;">
                     <option value="">Semua Tahun</option>
-                    </select>
+                </select>
             </div>
-            <button class="btn-reset" onclick="resetFilter()">Reset Filter</button>
+            <div class="row-flex">
+                <button class="btn-reset" onclick="resetFilter()">Reset Filter</button>
+                <button class="btn-export" onclick="exportCSV()">Unduh CSV</button>
+            </div>
         </div>
 
         <div id="riwayat-content"></div>
@@ -134,7 +147,7 @@
             estimasiPengeluaran: 6344594500
         };
 
-        // Data Default RAB dari Excel
+        // Data Default RAB
         const masterAnggaran = [
             { id: 1, nama: "Atap onduline duro 325", total: 2273600000 },
             { id: 2, nama: "Atap Spandex pasir 0.35 mm", total: 27195000 },
@@ -157,6 +170,7 @@
         const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 
         let riwayat = JSON.parse(localStorage.getItem('riwayatProyek')) || [];
+        let editId = null; // Variabel global buat nampung ID saat edit
         
         // Auto-migration ID
         let butuhSaveUpdate = false;
@@ -177,12 +191,32 @@
                 let sisa = item.total - terpakai;
                 totalSisaSemua += sisa;
                 
+                // Kalkulasi Progress Bar
+                let persenTerpakai = (terpakai / item.total) * 100;
+                let barWidth = persenTerpakai > 100 ? 100 : persenTerpakai;
+                
+                let barColor = 'bg-green';
+                let sisaStyle = 'color: #16a34a; font-weight: bold;'; // Default green
+                
+                if (persenTerpakai >= 100) {
+                    barColor = 'bg-red';
+                    sisaStyle = 'color: #dc2626; font-weight: bold;'; // Red (Overbudget)
+                } else if (persenTerpakai >= 90) {
+                    barColor = 'bg-orange';
+                    sisaStyle = 'color: #d97706; font-weight: bold;'; // Orange (Warning)
+                }
+
                 htmlList += `
                 <div class="card">
                     <div class="card-title">${item.nama}</div>
                     <div class="text-sm">Pagu Anggaran: <strong>${formatRp(item.total)}</strong></div>
-                    <div class="text-sm text-red">Terpakai: ${formatRp(terpakai)}</div>
-                    <div class="text-sm text-green">Sisa: ${formatRp(sisa)}</div>
+                    <div class="text-sm text-red">Terpakai: ${formatRp(terpakai)} (${persenTerpakai.toFixed(1)}%)</div>
+                    
+                    <div class="progress-bg">
+                        <div class="progress-fill ${barColor}" style="width: ${barWidth}%;"></div>
+                    </div>
+                    
+                    <div class="text-sm" style="${sisaStyle}">Sisa: ${formatRp(sisa)}</div>
                 </div>`;
             });
 
@@ -208,13 +242,10 @@
             document.getElementById('dashboard-content').innerHTML = htmlList;
         }
 
-        // Setup Dropdown Input & Filter Kategori/Tahun
         function setupDropdowns() {
-            // Setup Input Form Kategori
             let inputCat = document.getElementById('input-kategori');
             inputCat.innerHTML = '<option value="" disabled selected>-- Pilih Kategori --</option>';
             
-            // Setup Filter Kategori
             let filterCat = document.getElementById('filter-kategori');
             filterCat.innerHTML = '<option value="">Semua Kategori</option>';
 
@@ -227,21 +258,19 @@
             updateTahunFilter();
         }
 
-        // Dinamis narik tahun dari data riwayat yang ada
         function updateTahunFilter() {
             let filterTahun = document.getElementById('filter-tahun');
-            let currentSelected = filterTahun.value; // Simpan pilihan saat ini
+            let currentSelected = filterTahun.value; 
             
             let uniqueYears = [...new Set(riwayat.map(r => new Date(r.tanggal).getFullYear()))];
             if(uniqueYears.length === 0) uniqueYears.push(new Date().getFullYear());
-            uniqueYears.sort((a,b) => b - a); // Urut dari tahun terbaru
+            uniqueYears.sort((a,b) => b - a);
             
             filterTahun.innerHTML = '<option value="">Semua Tahun</option>';
             uniqueYears.forEach(year => {
                 if(!isNaN(year)) filterTahun.innerHTML += `<option value="${year}">${year}</option>`;
             });
             
-            // Kembalikan pilihan sebelumnya jika masih ada
             filterTahun.value = currentSelected;
         }
 
@@ -254,13 +283,11 @@
         }
 
         function renderRiwayat() {
-            // Ambil value Sort & Filter
             let sortType = document.getElementById('sort-riwayat').value;
             let filterKategori = document.getElementById('filter-kategori').value;
             let filterBulan = document.getElementById('filter-bulan').value;
             let filterTahun = document.getElementById('filter-tahun').value;
             
-            // Logika Filter
             let filteredRiwayat = riwayat.filter(r => {
                 let pass = true;
                 let dateObj = new Date(r.tanggal);
@@ -272,7 +299,6 @@
                 return pass;
             });
             
-            // Logika Sort
             if (sortType === 'terbaru') {
                 filteredRiwayat.sort((a, b) => b.id_transaksi - a.id_transaksi);
             } else if (sortType === 'terlama') {
@@ -283,7 +309,6 @@
                 filteredRiwayat.sort((a, b) => a.nominal - b.nominal);
             }
 
-            // Render ke HTML
             let html = '';
             if (filteredRiwayat.length === 0) {
                 html = '<div class="card text-sm">Tidak ada pengeluaran yang sesuai filter/belum ada data.</div>';
@@ -296,6 +321,7 @@
                     
                     html += `
                     <div class="card">
+                        <button class="btn-edit-item" onclick="editSatuRiwayat(${r.id_transaksi})">Edit</button>
                         <button class="btn-delete-item" onclick="hapusSatuRiwayat(${r.id_transaksi})">Hapus</button>
                         <div class="text-sm">${r.tanggal}</div>
                         <div class="card-title">${namaKategori}</div>
@@ -304,13 +330,12 @@
                     </div>`;
                 });
                 
-                // Tambahan info total khusus data yang difilter (opsional tapi bagus buat laporan)
                 html = `<div class="text-sm" style="margin-bottom:12px; font-weight:bold; text-align:right;">Total Data Ditampilkan: <span class="text-red">${formatRp(totalNominalFilter)}</span></div>` + html;
             }
             document.getElementById('riwayat-content').innerHTML = html;
         }
 
-        // --- FITUR AUTO FORMAT RUPIAH SAAT MENGETIK ---
+        // --- FITUR AUTO FORMAT RUPIAH ---
         const inputNominal = document.getElementById('input-nominal');
         inputNominal.addEventListener('input', function(e) {
             let value = this.value.replace(/[^0-9]/g, '');
@@ -328,35 +353,86 @@
 
             let rawNominalString = document.getElementById('input-nominal').value;
             let pureNumber = parseInt(rawNominalString.replace(/[^0-9]/g, ''), 10);
+            let selectedKategori = document.getElementById('input-kategori').value;
 
             if (!pureNumber) {
                 alert('Nominal tidak valid!');
                 return;
             }
 
+            // CEK OVERBUDGET (Peringatan Popup)
+            let masterCat = masterAnggaran.find(m => m.id == selectedKategori);
+            // Hitung terpakai khusus kategori ini (tapi abaikan data yang lagi diedit biar akurat)
+            let terpakaiSekarang = riwayat.filter(r => r.id_kategori == selectedKategori && r.id_transaksi !== editId).reduce((sum, r) => sum + r.nominal, 0);
+            
+            if (terpakaiSekarang + pureNumber > masterCat.total) {
+                let over = (terpakaiSekarang + pureNumber) - masterCat.total;
+                if (!confirm(`⚠️ PERINGATAN OVERBUDGET!\n\nPengeluaran ini melebihi Pagu Anggaran kategori "${masterCat.nama}".\n\nAnggaran Minus: -${formatRp(over)}\n\nYakin ingin tetap menyimpan data ini?`)) {
+                    return; // Batalkan save jika user klik Cancel
+                }
+            }
+
             let newRecord = {
-                id_transaksi: Date.now(),
+                id_transaksi: editId !== null ? editId : Date.now(), // Pakai ID lama kalau lagi edit, kalau gak bikin baru
                 tanggal: document.getElementById('input-tanggal').value,
-                id_kategori: document.getElementById('input-kategori').value,
+                id_kategori: selectedKategori,
                 keterangan: document.getElementById('input-keterangan').value,
                 nominal: pureNumber
             };
             
-            riwayat.push(newRecord);
+            if (editId !== null) {
+                // Update data lama
+                let index = riwayat.findIndex(r => r.id_transaksi === editId);
+                if (index !== -1) riwayat[index] = newRecord;
+                alert('Data pengeluaran berhasil diperbarui!');
+                
+                // Reset mode edit
+                editId = null;
+                document.getElementById('form-title').innerText = "Catat Pengeluaran";
+                document.getElementById('btn-submit-form').innerText = "Simpan Pengeluaran";
+                document.getElementById('btn-submit-form').style.background = "var(--primary)";
+            } else {
+                // Tambah data baru
+                riwayat.push(newRecord);
+                alert('Data pengeluaran berhasil disimpan!');
+            }
+
             localStorage.setItem('riwayatProyek', JSON.stringify(riwayat));
-            
-            alert('Data pengeluaran berhasil disimpan!');
             
             document.getElementById('form-pengeluaran').reset();
             document.getElementById('input-nominal').value = '';
             document.getElementById('input-tanggal').valueAsDate = new Date();
             
-            updateTahunFilter(); // Update dropdown tahun takutnya ada tahun baru diinput
-            resetFilter(); // Reset filter biar data yang baru diinput langsung kelihatan
+            updateTahunFilter();
             renderDashboard();
+            renderRiwayat();
             
             switchView('dashboard', document.querySelector('.bottom-nav .nav-item:first-child'));
         });
+
+        // --- FUNGSI EDIT SATUAN ---
+        function editSatuRiwayat(id) {
+            let record = riwayat.find(r => r.id_transaksi === id);
+            if (!record) return;
+
+            editId = id; // Set state sedang edit
+            
+            // Isi form dengan data lama
+            document.getElementById('input-tanggal').value = record.tanggal;
+            document.getElementById('input-kategori').value = record.id_kategori;
+            document.getElementById('input-keterangan').value = record.keterangan;
+            
+            let formatted = new Intl.NumberFormat('id-ID').format(record.nominal);
+            document.getElementById('input-nominal').value = 'Rp ' + formatted;
+
+            // Ubah tampilan tombol
+            document.getElementById('form-title').innerText = "Edit Pengeluaran";
+            document.getElementById('btn-submit-form').innerText = "Update Pengeluaran";
+            document.getElementById('btn-submit-form').style.background = "#f59e0b"; // Warna orange
+
+            // Pindah ke tab input
+            switchView('input', document.querySelectorAll('.nav-item')[1]);
+        }
 
         // --- FUNGSI HAPUS SATUAN ---
         function hapusSatuRiwayat(id) {
@@ -364,10 +440,42 @@
                 riwayat = riwayat.filter(r => r.id_transaksi !== id);
                 localStorage.setItem('riwayatProyek', JSON.stringify(riwayat));
                 
-                updateTahunFilter(); // Update takutnya tahun terakhir ikut kehapus
+                updateTahunFilter(); 
                 renderDashboard();
                 renderRiwayat();
             }
+        }
+
+        // --- FUNGSI EXPORT CSV ---
+        function exportCSV() {
+            if (riwayat.length === 0) {
+                alert('Belum ada data untuk diunduh!');
+                return;
+            }
+
+            let csvContent = "Tanggal,Kategori,Keterangan,Nominal (Rp)\n";
+            
+            // Urutkan berdasarkan tanggal terbaru
+            let sortedExport = [...riwayat].sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            sortedExport.forEach(r => {
+                let namaKategori = masterAnggaran.find(m => m.id == r.id_kategori)?.nama || 'Unknown';
+                // Bersihkan text dari koma atau tanda kutip ganda biar file CSV gak error berantakan
+                let ketClean = `"${r.keterangan.replace(/"/g, '""')}"`;
+                csvContent += `${r.tanggal},"${namaKategori}",${ketClean},${r.nominal}\n`;
+            });
+
+            // Bikin file Blob dan paksa download
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            let url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Laporan_Proyek_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // --- FUNGSI HAPUS SEMUA ---
