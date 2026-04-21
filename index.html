@@ -10,8 +10,9 @@
         header { background: var(--primary); color: white; padding: 16px; text-align: center; font-weight: bold; font-size: 1.2rem; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .container { padding: 16px; }
         .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-info { background: #eff6ff; border-left: 4px solid var(--primary); }
         .card-title { font-weight: bold; margin-bottom: 8px; font-size: 0.95rem; }
-        .text-sm { font-size: 0.85rem; color: #4b5563; }
+        .text-sm { font-size: 0.85rem; color: #4b5563; margin-bottom: 4px; }
         .text-red { color: #dc2626; font-weight: bold; }
         .text-green { color: #16a34a; font-weight: bold; }
         
@@ -35,7 +36,10 @@
     <header>Pantau Proyek</header>
 
     <div class="container view active" id="view-dashboard">
-        <h2 style="font-size: 1.1rem; margin-top:0;">Ringkasan Anggaran</h2>
+        <h2 style="font-size: 1.1rem; margin-top:0;">Informasi Proyek</h2>
+        <div id="info-proyek"></div>
+
+        <h2 style="font-size: 1.1rem; margin-top:20px;">Ringkasan Anggaran</h2>
         <div id="dashboard-content"></div>
     </div>
 
@@ -53,7 +57,7 @@
                 <input type="text" id="input-keterangan" placeholder="Contoh: Beli di Toko A" required>
                 
                 <label>Nominal (Rp)</label>
-                <input type="number" id="input-nominal" placeholder="Contoh: 1500000" required>
+                <input type="text" id="input-nominal" placeholder="Contoh: Rp 1.500.000" required autocomplete="off">
                 
                 <button type="submit">Simpan Pengeluaran</button>
             </form>
@@ -73,7 +77,16 @@
     </div>
 
     <script>
-        // Data Default dari Excel
+        // Data Global Proyek dari Excel
+        const infoProyek = {
+            nilaiProyek: 7400000000,
+            dp: 1800000000,
+            modal: 4544594500,
+            profitBersih: 1055405500,
+            estimasiPengeluaran: 6344594500
+        };
+
+        // Data Default RAB dari Excel
         const masterAnggaran = [
             { id: 1, nama: "Atap onduline duro 325", total: 2273600000 },
             { id: 2, nama: "Atap Spandex pasir 0.35 mm", total: 27195000 },
@@ -93,20 +106,24 @@
             { id: 16, nama: "Mob Demob dll", total: 400000000 }
         ];
 
-        // Format Rupiah
+        // Format Rupiah standar
         const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 
         // Ambil riwayat dari Local Storage offline
         let riwayat = JSON.parse(localStorage.getItem('riwayatProyek')) || [];
 
         function renderDashboard() {
-            let html = '';
+            let htmlList = '';
+            let totalSisaSemua = 0;
+
+            // 1. Loop untuk konten Master Anggaran
             masterAnggaran.forEach(item => {
-                // Hitung total terpakai berdasarkan riwayat
                 let terpakai = riwayat.filter(r => r.id_kategori == item.id).reduce((sum, r) => sum + r.nominal, 0);
                 let sisa = item.total - terpakai;
                 
-                html += `
+                totalSisaSemua += sisa;
+                
+                htmlList += `
                 <div class="card">
                     <div class="card-title">${item.nama}</div>
                     <div class="text-sm">Pagu Anggaran: <strong>${formatRp(item.total)}</strong></div>
@@ -114,7 +131,28 @@
                     <div class="text-sm text-green">Sisa: ${formatRp(sisa)}</div>
                 </div>`;
             });
-            document.getElementById('dashboard-content').innerHTML = html;
+
+            // 2. Render Card Informasi Global Proyek
+            let persenProfit = ((infoProyek.profitBersih / infoProyek.nilaiProyek) * 100).toFixed(2);
+            let htmlInfo = `
+                <div class="card card-info">
+                    <div class="text-sm">Nilai Proyek: <strong>${formatRp(infoProyek.nilaiProyek)}</strong></div>
+                    <div class="text-sm">DP: <strong>${formatRp(infoProyek.dp)}</strong></div>
+                    <div class="text-sm">Modal: <strong>${formatRp(infoProyek.modal)}</strong></div>
+                    <div class="text-sm" style="margin-bottom: 8px;">Estimasi Pengeluaran RAB: <strong>${formatRp(infoProyek.estimasiPengeluaran)}</strong></div>
+                    
+                    <div class="text-sm" style="background:#dbeafe; padding:6px; border-radius:4px; display:inline-block; margin-bottom:12px;">
+                        Profit Bersih: <strong>${formatRp(infoProyek.profitBersih)} (${persenProfit}%)</strong>
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px dashed #93c5fd; margin: 0 0 10px 0;">
+                    <div class="text-sm" style="font-size: 1rem;">Total Sisa Anggaran Saat Ini:</div>
+                    <div class="text-green" style="font-size: 1.2rem;">${formatRp(totalSisaSemua)}</div>
+                </div>
+            `;
+
+            document.getElementById('info-proyek').innerHTML = htmlInfo;
+            document.getElementById('dashboard-content').innerHTML = htmlList;
         }
 
         function renderDropdown() {
@@ -123,7 +161,6 @@
             masterAnggaran.forEach(item => {
                 select.innerHTML += `<option value="${item.id}">${item.nama}</option>`;
             });
-            // Set tanggal hari ini default
             document.getElementById('input-tanggal').valueAsDate = new Date();
         }
 
@@ -146,26 +183,56 @@
             document.getElementById('riwayat-content').innerHTML = html;
         }
 
-        // Handle Submit Form
+        // --- FITUR AUTO FORMAT RUPIAH SAAT MENGETIK ---
+        const inputNominal = document.getElementById('input-nominal');
+        inputNominal.addEventListener('input', function(e) {
+            // Hapus semua huruf/simbol selain angka
+            let value = this.value.replace(/[^0-9]/g, '');
+            if (value === '') {
+                this.value = '';
+                return;
+            }
+            // Format angka menjadi standar Indonesia pakai titik separator
+            let formatted = new Intl.NumberFormat('id-ID').format(value);
+            this.value = 'Rp ' + formatted;
+        });
+
+        // --- HANDLE SUBMIT FORM ---
         document.getElementById('form-pengeluaran').addEventListener('submit', function(e) {
             e.preventDefault();
+
+            // Extract nominal dari string format (misal dari "Rp 15.000.000" jadi angka 15000000)
+            let rawNominalString = document.getElementById('input-nominal').value;
+            let pureNumber = parseInt(rawNominalString.replace(/[^0-9]/g, ''), 10);
+
+            if (!pureNumber) {
+                alert('Nominal tidak valid!');
+                return;
+            }
+
             let newRecord = {
                 tanggal: document.getElementById('input-tanggal').value,
                 id_kategori: document.getElementById('input-kategori').value,
                 keterangan: document.getElementById('input-keterangan').value,
-                nominal: parseInt(document.getElementById('input-nominal').value)
+                nominal: pureNumber
             };
             
             riwayat.push(newRecord);
             localStorage.setItem('riwayatProyek', JSON.stringify(riwayat));
             
             alert('Data pengeluaran berhasil disimpan!');
-            document.getElementById('form-pengeluaran').reset();
-            renderDropdown(); // reset tanggal
             
-            // Refresh data
+            // Reset Form dan Set ulang input-nominal biar kosong
+            document.getElementById('form-pengeluaran').reset();
+            document.getElementById('input-nominal').value = '';
+            renderDropdown(); // Reset tanggal ke hari ini
+            
+            // Refresh tampilan data
             renderDashboard();
             renderRiwayat();
+            
+            // Pindah view balik ke dashboard (Opsional, biar om lu langsung liat budget ngurang)
+            switchView('dashboard', document.querySelector('.bottom-nav .nav-item:first-child'));
         });
 
         function hapusSemuaRiwayat() {
